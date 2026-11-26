@@ -99,6 +99,11 @@ export function App() {
       return;
     }
 
+    if (selectedFile.size > 25 * 1024 * 1024) {
+      setErrorMsg("O arquivo PDF excede o limite de 25 MB.");
+      return;
+    }
+
     setLoading(true);
     try {
       const formData = new FormData();
@@ -109,14 +114,36 @@ export function App() {
       const response = await fetch("/api/extract", {
         method: "POST",
         body: formData,
+        credentials: "same-origin",
       });
 
-      const payload = (await response.json()) as Partial<ExtractResponse> & {
-        error?: string;
-      };
+      const rawText = await response.text();
+      let payload: (Partial<ExtractResponse> & { error?: string }) | null = null;
+      if (rawText) {
+        try {
+          payload = JSON.parse(rawText) as Partial<ExtractResponse> & {
+            error?: string;
+          };
+        } catch {
+          payload = null;
+        }
+      }
 
       if (!response.ok) {
-        setErrorMsg(payload.error || "Não foi possível extrair os dados do PDF.");
+        if (payload?.error) {
+          setErrorMsg(payload.error);
+        } else if (response.status === 413) {
+          setErrorMsg("O arquivo PDF excede o limite de tamanho permitido pelo servidor.");
+        } else if (response.status === 502 || response.status === 503 || response.status === 504) {
+          setErrorMsg("O servidor ainda está iniciando ou demorou para responder. Tente novamente em alguns segundos.");
+        } else {
+          setErrorMsg(`Erro no servidor (HTTP ${response.status}). Tente novamente.`);
+        }
+        return;
+      }
+
+      if (!payload) {
+        setErrorMsg("Resposta inválida do servidor ao processar o PDF.");
         return;
       }
 
@@ -129,8 +156,9 @@ export function App() {
         });
         setResult(payload.result);
       }
-    } catch {
-      setErrorMsg("Falha de conexão com o servidor ao extrair as informações.");
+    } catch (err) {
+      const detail = err instanceof Error && err.message ? ` (${err.message})` : "";
+      setErrorMsg(`Falha de conexão com o servidor ao extrair as informações${detail}.`);
     } finally {
       setLoading(false);
     }

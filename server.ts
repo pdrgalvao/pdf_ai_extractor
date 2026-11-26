@@ -48,7 +48,7 @@ function formatGeminiError(err: unknown): { status: number; message: string } {
 
   if (lower.includes("api_key_invalid") || lower.includes("permission_denied") || lower.includes("403")) {
     return {
-      status: 403,
+      status: 400,
       message:
         "Chave da API do Gemini inválida ou sem permissão. Verifique GEMINI_API_KEY em Settings > Secrets.",
     };
@@ -100,7 +100,24 @@ async function startServer() {
     });
   });
 
-  app.post("/api/extract", upload.single("pdf"), async (req, res) => {
+  app.get("/api/health", (_req, res) => {
+    res.json({ ok: true });
+  });
+
+  app.post("/api/extract", (req, res, next) => {
+    upload.single("pdf")(req, res, (uploadErr: unknown) => {
+      if (uploadErr) {
+        if (uploadErr instanceof multer.MulterError && uploadErr.code === "LIMIT_FILE_SIZE") {
+          res.status(413).json({ error: "O arquivo PDF excede o limite de 25 MB." });
+          return;
+        }
+        const msg = uploadErr instanceof Error ? uploadErr.message : "Erro ao receber o arquivo PDF.";
+        res.status(400).json({ error: msg });
+        return;
+      }
+      next();
+    });
+  }, async (req, res) => {
     try {
       const file = req.file;
       if (!file) {
@@ -213,7 +230,7 @@ async function startServer() {
       }
 
       if (!responseText) {
-        res.status(502).json({
+        res.status(500).json({
           error: "O Gemini retornou uma resposta vazia. Tente novamente.",
         });
         return;
@@ -223,7 +240,7 @@ async function startServer() {
       try {
         parsedJson = JSON.parse(responseText) as Record<string, unknown>;
       } catch {
-        res.status(502).json({
+        res.status(500).json({
           error: "A resposta do Gemini não pôde ser interpretada como JSON válido.",
         });
         return;
@@ -255,6 +272,20 @@ async function startServer() {
       res.status(400).json({ error: message });
     }
   });
+
+  app.use(
+    "/api",
+    (
+      err: unknown,
+      _req: express.Request,
+      res: express.Response,
+      _next: express.NextFunction
+    ) => {
+      const message =
+        err instanceof Error ? err.message : "Erro interno no servidor.";
+      res.status(500).json({ error: message });
+    }
+  );
 
   if (process.env.NODE_ENV === "production") {
     const distDir = path.join(__dirname, "dist");
