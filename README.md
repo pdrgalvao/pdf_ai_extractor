@@ -1,30 +1,36 @@
 # PDF AI Extractor
 
-Aplicação local que lê o texto de um PDF, pede ao Google Gemini os campos que você indicar e devolve o resultado em tabela, JSON e CSV.
+Aplicação web (Node.js + Express + React + Vite) que lê o texto de um PDF, pede ao Google Gemini os campos que você indicar e devolve o resultado em tabela, JSON e CSV.
 
-A leitura do PDF acontece na sua máquina. A chave da API não fica no código: use a variável `GEMINI_API_KEY` ou cole a chave na barra lateral (ela permanece só na sessão).
+A chave da API não fica no código nem é pedida na interface: configure a variável `GEMINI_API_KEY` no servidor (ou em **Settings > Secrets** no Google AI Studio).
 
-O modelo padrão é `gemini-3.8-flash`, que tem cota gratuita no Google AI Studio. Não é necessário conta paga nem a API da OpenAI.
+O modelo padrão é `gemini-4-hydrogen`, com cota gratuita no Google AI Studio.
 
 ## Preparar
 
-1. Crie uma chave gratuita em [Google AI Studio](https://aistudio.google.com/apikey).
-2. Na pasta do projeto:
+1. Crie uma chave gratuita em [Google AI Studio](https://aistudio.google.com/apikey) (ou configure em **Settings > Secrets**).
+2. Instale as dependências e crie o arquivo `.env` a partir de `.env.example`:
 
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-copy .env.example .env
+```bash
+npm install
+cp .env.example .env
 ```
 
-3. Abra `.env` e cole a chave em `GEMINI_API_KEY`.
+3. Preencha `GEMINI_API_KEY` no `.env` (ou nas variáveis de ambiente do servidor).
 
 ## Executar
 
-```powershell
-.\.venv\Scripts\Activate.ps1
-python -m streamlit run app.py
+Desenvolvimento (porta 3000):
+
+```bash
+npm run dev
+```
+
+Build e execução em produção:
+
+```bash
+npm run build
+npm start
 ```
 
 ## Campos
@@ -39,11 +45,3 @@ valor: valor total em reais
 ```
 
 Se o dado não estiver no texto, o campo volta vazio (`null` no JSON). PDFs que são apenas imagem não têm texto selecionável; esta versão não faz OCR.
-
-## Testes
-
-```powershell
-python -m pytest
-```
-
-Os testes geram um PDF em memória e validam o JSON sem chamar o Gemini.
