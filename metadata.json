@@ -1,0 +1,8 @@
+{
+  "name": "PDF AI Extractor",
+  "description": "Envie um PDF com texto, informe os campos desejados e extraia os dados estruturados em tabela, JSON e CSV com o Google Gemini.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
