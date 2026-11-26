@@ -1,41 +1,36 @@
 # PDF AI Extractor
 
-Aplicação web (Node.js + Express + React + Vite) que lê o texto de um PDF, pede ao Google Gemini os campos que você indicar e devolve o resultado em tabela, JSON e CSV.
+Aplicação web que lê o texto de um PDF, extrai os campos desejados com o Google Gemini e gera tabela, JSON e CSV.
 
-A chave da API não fica no código nem é pedida na interface: configure a variável `GEMINI_API_KEY` no servidor (ou em **Settings > Secrets** no Google AI Studio).
+## Jeito mais simples (sem instalar nada)
 
-O modelo padrão é `gemini-4-hydrogen`, com cota gratuita no Google AI Studio.
+Use o link publicado pelo botão **Share** no Google AI Studio (com `GEMINI_API_KEY` configurada em **Settings > Secrets**). Assim funciona direto no navegador em qualquer computador.
 
-## Preparar
+## Rodar localmente em outro PC
 
-1. Crie uma chave gratuita em [Google AI Studio](https://aistudio.google.com/apikey) (ou configure em **Settings > Secrets**).
-2. Instale as dependências e crie o arquivo `.env` a partir de `.env.example`:
+Requer apenas [Node.js](https://nodejs.org/) (v22 ou superior):
+
+1. Instale as dependências (apenas na primeira vez):
 
 ```bash
 npm install
-cp .env.example .env
 ```
 
-3. Preencha `GEMINI_API_KEY` no `.env` (ou nas variáveis de ambiente do servidor).
+2. Crie o arquivo `.env` na raiz com sua chave gratuita do [Google AI Studio](https://aistudio.google.com/apikey):
 
-## Executar
+```text
+GEMINI_API_KEY=sua_chave_aqui
+```
 
-Desenvolvimento (porta 3000):
+3. Inicie o aplicativo e abra `http://localhost:3000`:
 
 ```bash
 npm run dev
 ```
 
-Build e execução em produção:
-
-```bash
-npm run build
-npm start
-```
-
 ## Campos
 
-Um campo por linha. A descrição depois dos dois-pontos orienta a IA:
+Um campo por linha (use `nome: descrição` se quiser orientar a IA):
 
 ```text
 nome: nome completo da pessoa
@@ -44,4 +39,4 @@ data
 valor: valor total em reais
 ```
 
-Se o dado não estiver no texto, o campo volta vazio (`null` no JSON). PDFs que são apenas imagem não têm texto selecionável; esta versão não faz OCR.
+Se o dado não estiver no texto, o campo volta como `null`. PDFs que são apenas imagem não têm texto selecionável (esta versão não faz OCR).
